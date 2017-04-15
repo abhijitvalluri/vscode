@@ -1292,6 +1292,27 @@ export interface IModelDecorationOverviewRulerOptions {
 }
 
 /**
+ * Options for rendering a model decoration in the minimap.
+ */
+export interface IModelDecorationMinimapOptions {
+	/**
+	 * CSS color to render in the overview ruler.
+	 * e.g.: rgba(100, 100, 100, 0.5)
+	 */
+	color: string;
+	/**
+	 * CSS color to render in the overview ruler.
+	 * e.g.: rgba(100, 100, 100, 0.5)
+	 */
+	darkColor: string;
+	/**
+	 * CSS color to render in the overview ruler.
+	 * e.g.: rgba(100, 100, 100, 0.5)
+	 */
+	hcColor?: string;
+}
+
+/**
  * Options for a model decoration.
  */
 export interface IModelDecorationOptions {
@@ -1324,6 +1345,10 @@ export interface IModelDecorationOptions {
 	 * If set, render this decoration in the overview ruler.
 	 */
 	overviewRuler?: IModelDecorationOverviewRulerOptions;
+	/**
+	 * If set, render this decoration in the minimap.
+	 */
+	minimap?: IModelDecorationMinimapOptions;
 	/**
 	 * If set, the decoration will be rendered in the glyph margin with this CSS class name.
 	 */

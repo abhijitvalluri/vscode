@@ -15,7 +15,8 @@ import * as dom from 'vs/base/browser/dom';
 import { MinimapCharRenderer, MinimapTokensColorTracker, Constants } from 'vs/editor/common/view/minimapCharRenderer';
 import * as editorCommon from 'vs/editor/common/editorCommon';
 import { CharCode } from 'vs/base/common/charCode';
-import { IViewLayout, ViewLineData } from 'vs/editor/common/viewModel/viewModel';
+import { IViewLayout, ViewLineData, MinimapLinesRenderingData } from 'vs/editor/common/viewModel/viewModel';
+import { ViewLineToken } from 'vs/editor/common/core/viewLineToken';
 import { ColorId } from 'vs/editor/common/modes';
 import { FastDomNode, createFastDomNode } from 'vs/base/browser/fastDomNode';
 import { IDisposable } from 'vs/base/common/lifecycle';
@@ -429,6 +430,8 @@ export class Minimap extends ViewPart {
 	private _options: MinimapOptions;
 	private _lastRenderData: RenderData;
 	private _buffers: MinimapBuffers;
+	private _shouldUpdateDecorations: Boolean;
+	private _zonesFromDecorations: editorCommon.OverviewRulerZone[];
 
 	constructor(context: ViewContext, viewLayout: IViewLayout, editorScrollbar: EditorScrollbar) {
 		super(context);
@@ -634,13 +637,44 @@ export class Minimap extends ViewPart {
 		return true;
 	}
 
+	public onDecorationsChanged(e: viewEvents.ViewDecorationsChangedEvent): boolean {
+		this._shouldUpdateDecorations = true;
+		return true;
+	}
+
 	// --- end event handlers
+	private _createZonesFromDecorations(): editorCommon.OverviewRulerZone[] {
+		let decorations = this._context.model.getAllOverviewRulerDecorations();
+		let zones: editorCommon.OverviewRulerZone[] = [];
+
+		for (let i = 0, len = decorations.length; i < len; i++) {
+			let dec = decorations[i];
+			let overviewRuler = dec.source.options.overviewRuler;
+			if (overviewRuler.position === editorCommon.OverviewRulerLane.Center) {
+				zones.push(new editorCommon.OverviewRulerZone(
+								dec.range.startLineNumber,
+								dec.range.endLineNumber,
+								overviewRuler.position,
+								0,
+								overviewRuler.color,
+								overviewRuler.darkColor,
+								overviewRuler.hcColor
+							));
+			}
+
+		}
+
+		return zones;
+	}
 
 	public prepareRender(ctx: RenderingContext): void {
 		// Nothing to read
 	}
 
 	public render(renderingCtx: RestrictedRenderingContext): void {
+		if (this._shouldUpdateDecorations) {
+			this._lastRenderData = null;
+		}
 		const renderMinimap = this._options.renderMinimap;
 		if (renderMinimap === RenderMinimap.None) {
 			this._shadow.setClassName('minimap-shadow-hidden');
@@ -685,6 +719,7 @@ export class Minimap extends ViewPart {
 		const background = this._tokensColorTracker.getColor(ColorId.DefaultBackground);
 		const useLighterFont = this._tokensColorTracker.backgroundIsLight();
 
+		// Restore lines when rendering highlights
 		// Render the rest of lines
 		let dy = 0;
 		let renderedLines: MinimapLine[] = [];
@@ -717,6 +752,28 @@ export class Minimap extends ViewPart {
 			imageData,
 			renderedLines
 		);
+
+		// render highlights
+		if (this._shouldUpdateDecorations) {
+			this._shouldUpdateDecorations = false;
+			let lineData = new ViewLineData("abcdefghijklmnopabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz", 1, 120, [new ViewLineToken(119, 0)]);
+			this._zonesFromDecorations = this._createZonesFromDecorations();
+			for (let i = 0; i < this._zonesFromDecorations.length; i++) {
+				for (let lineNumber = this._zonesFromDecorations[i].startLineNumber; lineNumber <= this._zonesFromDecorations[i].endLineNumber; lineNumber++) {
+					Minimap._renderLine(
+					imageData,
+					new RGBA(255, 255, 255, 255),
+					useLighterFont,
+					renderMinimap,
+					this._tokensColorTracker,
+					this._minimapCharRenderer,
+					lineNumber*minimapLineHeight,
+					tabSize,
+					lineData
+				);
+				}
+			}
+		}
 
 		// Finally, paint to the canvas
 		const ctx = this._canvas.domNode.getContext('2d');

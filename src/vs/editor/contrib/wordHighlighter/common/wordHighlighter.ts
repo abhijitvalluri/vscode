@@ -282,6 +282,10 @@ class WordHighlighter {
 						color: color,
 						darkColor: color,
 						position: editorCommon.OverviewRulerLane.Center
+					},
+					minimap: {
+						color: color,
+						darkColor: color
 					}
 				}
 			});
