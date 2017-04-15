@@ -15,8 +15,7 @@ import * as dom from 'vs/base/browser/dom';
 import { MinimapCharRenderer, MinimapTokensColorTracker, Constants } from 'vs/editor/common/view/minimapCharRenderer';
 import * as editorCommon from 'vs/editor/common/editorCommon';
 import { CharCode } from 'vs/base/common/charCode';
-import { IViewLayout, ViewLineData, MinimapLinesRenderingData } from 'vs/editor/common/viewModel/viewModel';
-import { ViewLineToken } from 'vs/editor/common/core/viewLineToken';
+import { IViewLayout, ViewLineData } from 'vs/editor/common/viewModel/viewModel';
 import { ColorId } from 'vs/editor/common/modes';
 import { FastDomNode, createFastDomNode } from 'vs/base/browser/fastDomNode';
 import { IDisposable } from 'vs/base/common/lifecycle';
@@ -756,20 +755,19 @@ export class Minimap extends ViewPart {
 		// render highlights
 		if (this._shouldUpdateDecorations) {
 			this._shouldUpdateDecorations = false;
-			let lineData = new ViewLineData("abcdefghijklmnopabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz", 1, 120, [new ViewLineToken(119, 0)]);
 			this._zonesFromDecorations = this._createZonesFromDecorations();
 			for (let i = 0; i < this._zonesFromDecorations.length; i++) {
 				for (let lineNumber = this._zonesFromDecorations[i].startLineNumber; lineNumber <= this._zonesFromDecorations[i].endLineNumber; lineNumber++) {
 					Minimap._renderLine(
 					imageData,
 					new RGBA(255, 255, 255, 255),
-					useLighterFont,
+					true,
 					renderMinimap,
 					this._tokensColorTracker,
 					this._minimapCharRenderer,
-					lineNumber*minimapLineHeight,
+					(lineNumber-1)*minimapLineHeight,
 					tabSize,
-					lineData
+					lineInfo.data[lineNumber-1]
 				);
 				}
 			}

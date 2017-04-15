@@ -133,7 +133,7 @@ export class Win32AutoUpdaterImpl extends EventEmitter implements IAutoUpdater {
 		}
 
 		spawn(this.updatePackagePath, ['/silent', '/mergetasks=runcode,!desktopicon,!quicklaunchicon'], {
-			detached: true,
+			detached: false,
 			stdio: ['ignore', 'ignore', 'ignore']
 		});
 	}
