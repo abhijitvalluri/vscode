@@ -671,8 +671,12 @@ export class Minimap extends ViewPart {
 	}
 
 	public render(renderingCtx: RestrictedRenderingContext): void {
+		if (this._zonesFromDecorations && this._zonesFromDecorations.length !== 0) {
+			this._lastRenderData = null;
+		}
 		if (this._shouldUpdateDecorations) {
 			this._lastRenderData = null;
+			this._zonesFromDecorations = this._createZonesFromDecorations();
 		}
 		const renderMinimap = this._options.renderMinimap;
 		if (renderMinimap === RenderMinimap.None) {
@@ -753,22 +757,25 @@ export class Minimap extends ViewPart {
 		);
 
 		// render highlights
-		if (this._shouldUpdateDecorations) {
+		if (this._zonesFromDecorations && this._zonesFromDecorations.length !== 0) {
 			this._shouldUpdateDecorations = false;
-			this._zonesFromDecorations = this._createZonesFromDecorations();
+			let whiteColor = new RGBA(255, 255, 255, 255);
 			for (let i = 0; i < this._zonesFromDecorations.length; i++) {
 				for (let lineNumber = this._zonesFromDecorations[i].startLineNumber; lineNumber <= this._zonesFromDecorations[i].endLineNumber; lineNumber++) {
-					Minimap._renderLine(
-					imageData,
-					new RGBA(255, 255, 255, 255),
-					true,
-					renderMinimap,
-					this._tokensColorTracker,
-					this._minimapCharRenderer,
-					(lineNumber-1)*minimapLineHeight,
-					tabSize,
-					lineInfo.data[lineNumber-1]
-				);
+					let lineIdx = lineNumber - startLineNumber;
+					if (lineInfo.data[lineIdx]) {
+						Minimap._renderLine(
+							imageData,
+							whiteColor,
+							true,
+							renderMinimap,
+							this._tokensColorTracker,
+							this._minimapCharRenderer,
+							lineIdx * minimapLineHeight,
+							tabSize,
+							lineInfo.data[lineIdx]
+						);
+					}
 				}
 			}
 		}
